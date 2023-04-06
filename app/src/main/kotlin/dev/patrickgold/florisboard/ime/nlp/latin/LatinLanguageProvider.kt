@@ -111,7 +111,9 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
             for (n in 0 until maxCandidateCount) {
                 add(WordSuggestionCandidate(
                     text = "$word$n",
-                    secondaryText = if (n % 2 == 1) "secondary" else null,
+                    // TODO: consider making use of secondary text (a line underneath the result!)
+                    // secondaryText = if (n % 2 == 1) "secondary" else null,
+                    secondaryText = null,
                     confidence = 0.5,
                     isEligibleForAutoCommit = false,//n == 0 && word.startsWith("auto"),
                     // We set ourselves as the source provider so we can get notify events for our candidate
