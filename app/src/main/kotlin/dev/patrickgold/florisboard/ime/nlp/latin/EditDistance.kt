@@ -16,17 +16,71 @@
 
 package dev.patrickgold.florisboard.ime.nlp.latin
 
-import org.apache.commons.text.similarity.LevenshteinDistance
+interface QuerySimilar {
+    fun consult(query: String): List<ConsultResult>
+}
 
-class EditDistance(private val wordData: Map<String, Int>) {
+enum class State {
+    Start,
+    End,
+    Inner,
+}
 
-    fun consult(max_distance: Int?, query: String): List<Pair<String, Int>> {
-        val lev = LevenshteinDistance(max_distance)
+data class VertexState<T>(val state: State, val key: T?) {
+    init {
+        if (key != null) {
+            assert(state == State.Inner)
+        } else {
+            assert(state == State.Start || state == State.End)
+        }
+    }
+}
 
-        return wordData
-            // TODO: integrate word frequency!
-            .map { (word, _freq) -> Pair(word, lev.apply(query, word)) }
-            // Filter out words that breached the max distance limit (returning -1).
-            .filter { (_, distance) -> distance >= 0 }
+data class Vertex<T>(val key: VertexState<T>)
+
+data class DirectedEdge<T>(val target: Vertex<T>)
+
+// NB: finding all cycles of length less than some max including the query path (string)!
+class WordGraph(wordData: Map<String, Int>) {
+    private val edgeList: MutableMap<Vertex<Char>, MutableList<DirectedEdge<Char>>> = mutableMapOf();
+
+    // Populate graph.
+    init {
+        // TODO: integrate word frequency!
+        for ((word, _freq) in wordData) {
+            assert(word.isNotBlank())
+            var source: Vertex<Char> = Vertex(VertexState(State.Start, null))
+            for (ch in word) {
+                edgeList[source] = edgeList.getOrElse(source) { -> mutableListOf() }
+                val innerTarget = Vertex(VertexState(State.Inner, ch));
+                edgeList[source]?.add(DirectedEdge(innerTarget))
+                source = innerTarget
+            }
+            val finalTarget: Vertex<Char> = Vertex(VertexState(State.End, null))
+            edgeList[source] = edgeList.getOrElse(source) { -> mutableListOf() }
+            edgeList[source]?.add(DirectedEdge(finalTarget))
+        }
+    }
+
+    fun querySimilar(maxDepth: Int, query: String): List<ConsultResult> {
+        val path: MutableList<Vertex<Char>> = mutableListOf(Vertex(VertexState(State.Start, null)))
+        for (ch in query) {
+            path.add(Vertex(VertexState(State.Inner, ch)))
+        }
+        path.add(Vertex(VertexState(State.End, null)))
+
+        val seen: MutableSet<Vertex<Char>> = mutableSetOf()
+        // TODO: find all start and end vertices within maxDepth distance
+    }
+}
+
+data class ConsultResult(val entry: String, val confidence: Double)
+
+class EditDistance(wordData: Map<String, Int>): QuerySimilar {
+    val graph = WordGraph(wordData)
+
+    override fun consult(query: String): List<ConsultResult> {
+        val maxDepth = 5;
+        return graph.querySimilar(maxDepth, query)
     }
 }

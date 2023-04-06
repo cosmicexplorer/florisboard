@@ -44,6 +44,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
     private val appContext by context.appContext()
 
     private val wordData = guardedByLock { mutableMapOf<String, Int>() }
+    private var editDistance: EditDistance? = null
     private val wordDataSerializer = MapSerializer(String.serializer(), Int.serializer())
 
     override val providerId = ProviderId
@@ -75,6 +76,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                 val rawData = appContext.assets.readText("ime/dict/data.json")
                 val jsonData = Json.decodeFromString(wordDataSerializer, rawData)
                 wordData.putAll(jsonData)
+                editDistance = EditDistance(wordData)
             }
         }
     }
@@ -107,10 +109,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         isPrivateSession: Boolean,
     ): List<SuggestionCandidate> {
         val minQueryLength: Int = 3
-        val editDistance = wordData.withLock { wordData ->
-            EditDistance(wordData.toMap())
-        };
-        val suggestions = if (content.composingText.isBlank() || content.composingText.length < minQueryLength )
+        val suggestions = if (content.composingText.length < minQueryLength)
             listOf(WordSuggestionCandidate(
                 text = "todo-empty-string",
                 secondaryText = null,
@@ -118,20 +117,16 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
                 isEligibleForAutoCommit = false,
                 sourceProvider = this@LatinLanguageProvider,
             )) else {
-            val word = content.composingText.toString()
-            val maxDistDefault: Int = 5
-            editDistance
-                .consult(maxDistDefault, word)
-                // We don't want exact matches!
-                .filter { (_, distance) -> distance > 0 }
-                .map { (result, distance) -> WordSuggestionCandidate(
+            editDistance!!
+                .consult(content.composingText.toString())
+                .map { (result, confidence) -> WordSuggestionCandidate(
                     text = result,
                     // TODO: consider making use of secondary text (a line underneath the result)!
                     secondaryText = null,
-                    confidence = (maxDistDefault - distance + 1).toDouble() / maxDistDefault.toDouble(),
+                    confidence = confidence,
                     // NB: if a completion is marked with "autocommit", then it can be completed
                     // by just pressing space!
-                    isEligibleForAutoCommit = distance == 1,
+                    isEligibleForAutoCommit = confidence == 1.0,
                     sourceProvider = this@LatinLanguageProvider,
                 )}
         }
