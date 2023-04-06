@@ -106,20 +106,34 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         allowPossiblyOffensive: Boolean,
         isPrivateSession: Boolean,
     ): List<SuggestionCandidate> {
-        val word = content.composingText.ifBlank { "next" }
-        val suggestions = buildList {
-            for (n in 0 until maxCandidateCount) {
-                add(WordSuggestionCandidate(
-                    text = "$word$n",
-                    // TODO: consider making use of secondary text (a line underneath the result!)
-                    // secondaryText = if (n % 2 == 1) "secondary" else null,
+        val minQueryLength: Int = 3
+        val editDistance = wordData.withLock { wordData ->
+            EditDistance(wordData.toMap())
+        };
+        val suggestions = if (content.composingText.isBlank() || content.composingText.length < minQueryLength )
+            listOf(WordSuggestionCandidate(
+                text = "todo-empty-string",
+                secondaryText = null,
+                confidence = 1.0,
+                isEligibleForAutoCommit = false,
+                sourceProvider = this@LatinLanguageProvider,
+            )) else {
+            val word = content.composingText.toString()
+            val maxDistDefault: Int = 5
+            editDistance
+                .consult(maxDistDefault, word)
+                // We don't want exact matches!
+                .filter { (_, distance) -> distance > 0 }
+                .map { (result, distance) -> WordSuggestionCandidate(
+                    text = result,
+                    // TODO: consider making use of secondary text (a line underneath the result)!
                     secondaryText = null,
-                    confidence = 0.5,
-                    isEligibleForAutoCommit = false,//n == 0 && word.startsWith("auto"),
-                    // We set ourselves as the source provider so we can get notify events for our candidate
+                    confidence = (maxDistDefault - distance + 1).toDouble() / maxDistDefault.toDouble(),
+                    // NB: if a completion is marked with "autocommit", then it can be completed
+                    // by just pressing space!
+                    isEligibleForAutoCommit = distance == 1,
                     sourceProvider = this@LatinLanguageProvider,
-                ))
-            }
+                )}
         }
         return suggestions
     }

@@ -215,6 +215,7 @@ dependencies {
     implementation(libs.androidx.emoji2.views)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.profileinstaller)
+    implementation("org.apache.commons:commons-text:1.10.0")
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
     implementation(libs.cache4k)
