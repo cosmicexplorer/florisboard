@@ -86,7 +86,10 @@ android {
         sourceSets {
             maybeCreate("main").apply {
                 assets {
-                    srcDirs("src/main/assets")
+                    srcDirs("src/main/assets", "src/main/icu4c/prebuilt/assets")
+                }
+                jniLibs {
+                    srcDirs("src/main/icu4c/prebuilt/jniLibs")
                 }
                 java {
                     srcDirs("src/main/kotlin")
