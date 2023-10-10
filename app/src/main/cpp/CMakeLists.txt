@@ -1,14 +1,24 @@
-cmake_minimum_required(VERSION 3.22)
+# For more information about using CMake with Android Studio, read the
+# documentation: https://d.android.com/studio/projects/add-native-code.html
 
-project(florisboard)
+cmake_minimum_required(VERSION 3.10.2)
 
-set(CMAKE_CXX_STANDARD 20)
+project("florisboard")
+
+set(CMAKE_CXX_STANDARD 17)
 
 include_directories(.)
 
+### ICU4C ###
+#include_directories(../icu4c/prebuilt/include)
+#set(JNI_LIBS ${CMAKE_SOURCE_DIR}/../icu4c/prebuilt/jniLibs/${ANDROID_ABI})
+#add_library(ICU::data STATIC IMPORTED)
+#set_property(TARGET ICU::data PROPERTY IMPORTED_LOCATION "${JNI_LIBS}/libicudata.a")
+#add_library(ICU::uc STATIC IMPORTED)
+#set_property(TARGET ICU::uc PROPERTY IMPORTED_LOCATION "${JNI_LIBS}/libicuuc.a")
+
 ### FlorisBoard ###
 add_subdirectory(utils)
-add_subdirectory(nlp)
 
 add_library(
         florisboard-native
@@ -24,6 +34,7 @@ target_link_libraries(
         # Sources
         android
         log
-        fl::nlp::core
+        #ICU::uc
+        #ICU::data
         utils
 )

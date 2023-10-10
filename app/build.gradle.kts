@@ -69,13 +69,9 @@ android {
         externalNativeBuild {
             cmake {
                 targets("florisboard-native")
-                cppFlags("-std=c++20", "-stdlib=libc++")
-                arguments(
-                    "-DCMAKE_ANDROID_API=" + minSdk.toString(),
-                    "-DICU_ASSET_EXPORT_DIR=" + project.file("src/main/assets/icu4c").absolutePath,
-                    "-DBUILD_SHARED_LIBS=false",
-                    "-DANDROID_STL=c++_static",
-                )
+                //cFlags("-fvisibility=hidden", "-DU_STATIC_IMPLEMENTATION=1")
+                //cppFlags("-fvisibility=hidden", "-std=c++17", "-fexceptions", "-ffunction-sections", "-fdata-sections", "-DU_DISABLE_RENAMING=1", "-DU_STATIC_IMPLEMENTATION=1")
+                arguments("-DANDROID_STL=c++_static")
             }
         }
 
@@ -131,7 +127,7 @@ android {
 
             ndk {
                 // For running FlorisBoard on the emulator
-                // abiFilters += listOf("x86", "x86_64")
+                abiFilters += listOf("x86", "x86_64")
             }
 
             resValue("mipmap", "floris_app_icon", "@mipmap/ic_app_icon_debug")

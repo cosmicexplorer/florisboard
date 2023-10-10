@@ -1,7 +1,6 @@
 add_library(
         # Name
         utils
-        SHARED
 
         # Headers
         jni_utils.h
@@ -11,5 +10,3 @@ add_library(
         jni_utils.cpp
         log.cpp
 )
-
-target_link_libraries(utils PUBLIC log)
