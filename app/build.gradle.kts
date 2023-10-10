@@ -31,9 +31,9 @@ plugins {
 
 android {
     namespace = "dev.patrickgold.florisboard"
-    compileSdk = 33
-    buildToolsVersion = "33.0.2"
-    ndkVersion = "25.2.9519653"
+    compileSdk = 34
+    buildToolsVersion = "34.0.0"
+    ndkVersion = "26.0.10792818"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -118,6 +118,9 @@ android {
     }
 
     buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         named("debug") {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug-${getGitCommitHash(short = true)}"
